@@ -1,0 +1,84 @@
+@model MovieCatalog.Models.Movie
+@{
+    ViewData["Title"] = "Видалити фільм";
+}
+
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; min-height: 100vh; }
+        .container { max-width: 700px; margin: 0 auto; }
+        .back-btn { display: inline-block; background: white; color: #667eea; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-bottom: 20px; transition: 0.3s; }
+        .back-btn:hover { background: #f3f4f6; }
+        .delete-container { background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; }
+        .delete-container h1 { color: #ef4444; margin-bottom: 20px; font-size: 2em; }
+        .warning-icon { font-size: 4em; margin-bottom: 20px; }
+        .warning-message { color: #6b7280; font-size: 1.2em; margin-bottom: 30px; }
+        .movie-preview { background: #f9fafb; border-radius: 15px; padding: 30px; margin: 30px 0; }
+        .movie-preview img { max-width: 200px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); margin-bottom: 20px; }
+        .movie-preview h2 { color: #374151; margin-bottom: 15px; }
+        .movie-info { text-align: left; display: inline-block; }
+        .movie-info p { color: #6b7280; margin: 8px 0; }
+        .movie-info strong { color: #374151; }
+        .rating-display { background: #fef3c7; padding: 15px; border-radius: 10px; margin: 15px 0; }
+        .rating-display span { font-size: 1.5em; color: #f59e0b; }
+        .comments-warning { background: #fee2e2; color: #991b1b; padding: 15px; border-radius: 10px; margin: 15px 0; font-weight: bold; }
+        .form-actions { display: flex; gap: 15px; margin-top: 30px; }
+        .btn { flex: 1; padding: 14px; border: none; border-radius: 8px; font-size: 1.1em; font-weight: bold; cursor: pointer; transition: 0.3s; text-align: center; text-decoration: none; display: inline-block; }
+        .btn-delete { background: #ef4444; color: white; }
+        .btn-delete:hover { background: #dc2626; }
+        .btn-cancel { background: #6b7280; color: white; }
+        .btn-cancel:hover { background: #4b5563; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="@Url.Action("Index", "Home")" class="back-btn">⬅️ Назад до списку</a>
+
+        <div class="delete-container">
+            <div class="warning-icon">⚠️</div>
+            <h1>Видалити фільм?</h1>
+            <p class="warning-message">Ви впевнені, що хочете видалити цей фільм? Ця дія незворотна!</p>
+
+            @if (Model.Comments.Count > 0)
+            {
+                <div class="comments-warning">
+                    ⚠️ УВАГА: Також буде видалено @Model.Comments.Count коментар(ів) до цього фільму!
+                </div>
+            }
+
+            <div class="movie-preview">
+                <img src="@Model.PosterUrl" alt="@Model.Title" onerror="this.src='/images/movies/default.jpg'">
+                <h2>@Model.Title</h2>
+                
+                <div class="rating-display">
+                    <span>⭐ @Model.Rating.ToString("0.0") / 10</span>
+                    <br>
+                    <small>(@Model.RatingCount оцінок)</small>
+                </div>
+
+                <div class="movie-info">
+                    <p><strong>Режисер:</strong> @Model.Director</p>
+                    <p><strong>Жанр:</strong> @Model.Genre</p>
+                    <p><strong>Рік:</strong> @Model.Year</p>
+                    <p><strong>Коментарів:</strong> @Model.Comments.Count</p>
+                    <p><strong>Опис:</strong> @Model.Description</p>
+                </div>
+            </div>
+
+            <form asp-action="Delete" method="post">
+                <input type="hidden" asp-for="Id" />
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-delete">🗑️ Так, видалити</button>
+                    <a href="@Url.Action("Index", "Home")" class="btn btn-cancel">❌ Ні, скасувати</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,215 @@
+@model MovieCatalog.Models.Movie
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; min-height: 100vh; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .back-btn { display: inline-block; background: white; color: #667eea; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-bottom: 20px; transition: 0.3s; }
+        .back-btn:hover { background: #f3f4f6; transform: translateX(-5px); }
+        
+        .movie-details { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); margin-bottom: 30px; }
+        .movie-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; color: white; text-align: center; }
+        .movie-header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .movie-year-badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 8px 20px; border-radius: 20px; font-size: 1.1em; }
+        
+        .movie-body { display: grid; grid-template-columns: 400px 1fr; gap: 30px; padding: 30px; }
+        .movie-poster-section img { width: 100%; height: auto; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .movie-info-section { padding: 20px; }
+        
+        .info-row { margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid #e5e7eb; }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { font-weight: bold; color: #667eea; font-size: 1.1em; margin-bottom: 8px; display: block; }
+        .info-value { color: #374151; font-size: 1.1em; line-height: 1.6; }
+        
+        /* Рейтинг */
+        .rating-section { background: #fef3c7; padding: 20px; border-radius: 15px; margin-bottom: 20px; text-align: center; }
+        .current-rating { font-size: 3em; color: #f59e0b; font-weight: bold; }
+        .rating-stars { color: #f59e0b; font-size: 2em; }
+        .rating-count { color: #6b7280; margin-top: 10px; }
+        
+        /* Форма оцінювання */
+        .rate-movie-form { background: #e0e7ff; padding: 20px; border-radius: 15px; margin-bottom: 20px; }
+        .rate-movie-form h3 { color: #667eea; margin-bottom: 15px; text-align: center; }
+        .rating-buttons { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .rating-btn { background: white; border: 2px solid #667eea; color: #667eea; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .rating-btn:hover { background: #667eea; color: white; transform: scale(1.1); }
+        
+        .movie-actions { display: flex; gap: 15px; margin-top: 30px; padding-top: 30px; border-top: 2px solid #e5e7eb; }
+        .btn { display: inline-block; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; transition: 0.3s; text-align: center; border: none; cursor: pointer; }
+        .btn-edit { background: #f59e0b; color: white; }
+        .btn-edit:hover { background: #d97706; }
+        .btn-delete { background: #ef4444; color: white; }
+        .btn-delete:hover { background: #dc2626; }
+        
+        /* Коментарі */
+        .comments-section { background: white; border-radius: 20px; padding: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .comments-header { color: #667eea; font-size: 2em; margin-bottom: 20px; border-bottom: 3px solid #667eea; padding-bottom: 10px; }
+        
+        .comment-form { background: #f9fafb; padding: 25px; border-radius: 15px; margin-bottom: 30px; }
+        .comment-form h3 { color: #374151; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: bold; color: #374151; margin-bottom: 8px; }
+        .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1em; font-family: Arial, sans-serif; }
+        .form-group input:focus, .form-group textarea:focus { border-color: #667eea; outline: none; }
+        .form-group textarea { resize: vertical; min-height: 100px; }
+        .btn-submit { background: #10b981; color: white; width: 100%; padding: 14px; font-size: 1.1em; }
+        .btn-submit:hover { background: #059669; }
+        
+        .comments-list { margin-top: 30px; }
+        .comment-item { background: #f9fafb; padding: 20px; border-radius: 15px; margin-bottom: 20px; border-left: 4px solid #667eea; }
+        .comment-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .comment-author { font-weight: bold; color: #667eea; font-size: 1.1em; }
+        .comment-date { color: #6b7280; font-size: 0.9em; }
+        .comment-text { color: #374151; line-height: 1.6; margin-bottom: 10px; }
+        .btn-delete-comment { background: #ef4444; color: white; padding: 6px 12px; border: none; border-radius: 6px; font-size: 0.85em; cursor: pointer; transition: 0.3s; }
+        .btn-delete-comment:hover { background: #dc2626; }
+        
+        .no-comments { text-align: center; color: #6b7280; padding: 40px; font-size: 1.1em; }
+        
+        .alert { padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .alert-success { background: #d1fae5; color: #065f46; }
+        .alert-error { background: #fee2e2; color: #991b1b; }
+        
+        @@media (max-width: 768px) {
+            .movie-body { grid-template-columns: 1fr; }
+            .movie-header h1 { font-size: 1.8em; }
+            .rating-buttons { grid-template-columns: repeat(5, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="@Url.Action("Index", "Home")" class="back-btn">⬅️ Назад до списку</a>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success">✅ @TempData["Success"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-error">❌ @TempData["Error"]</div>
+        }
+
+        <div class="movie-details">
+            <div class="movie-header">
+                <h1>@Model.Title</h1>
+                <span class="movie-year-badge">📅 @Model.Year</span>
+            </div>
+
+            <div class="movie-body">
+                <div class="movie-poster-section">
+                    <img src="@Model.PosterUrl" alt="@Model.Title" onerror="this.src='/images/movies/default.jpg'">
+                </div>
+
+                <div class="movie-info-section">
+                    <!-- Поточний рейтинг -->
+                    <div class="rating-section">
+                        <div class="rating-stars">⭐⭐⭐⭐⭐</div>
+                        <div class="current-rating">@Model.Rating.ToString("0.0")</div>
+                        <div class="rating-count">Оцінок: @Model.RatingCount</div>
+                    </div>
+
+                    <!-- Форма оцінювання -->
+                    <div class="rate-movie-form">
+                        <h3>⭐ Оцініть цей фільм</h3>
+                        <form method="post" action="@Url.Action("RateMovie", "Home")">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="movieId" value="@Model.Id" />
+                            <div class="rating-buttons">
+                                @for (int i = 1; i <= 10; i++)
+                                {
+                                    <button type="submit" name="rating" value="@i" class="rating-btn">@i</button>
+                                }
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="info-row">
+                        <span class="info-label">🎬 Режисер</span>
+                        <span class="info-value">@Model.Director</span>
+                    </div>
+
+                    <div class="info-row">
+                        <span class="info-label">🎭 Жанр</span>
+                        <span class="info-value">@Model.Genre</span>
+                    </div>
+
+                    <div class="info-row">
+                        <span class="info-label">📖 Опис</span>
+                        <p class="info-value">@Model.Description</p>
+                    </div>
+
+                    <div class="movie-actions">
+                        <a href="@Url.Action("Edit", "Home", new { id = Model.Id })" class="btn btn-edit">✏️ Редагувати</a>
+                        <a href="@Url.Action("Delete", "Home", new { id = Model.Id })" class="btn btn-delete">🗑️ Видалити</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Секція коментарів -->
+        <div class="comments-section">
+            <h2 class="comments-header">💬 Коментарі (@Model.Comments.Count)</h2>
+
+            <!-- Форма додавання коментаря -->
+            <div class="comment-form">
+                <h3>Залишити коментар</h3>
+                <form method="post" action="@Url.Action("AddComment", "Home")">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="movieId" value="@Model.Id" />
+                    
+                    <div class="form-group">
+                        <label>Ваше ім'я *</label>
+                        <input type="text" name="authorName" required placeholder="Введіть ваше ім'я" maxlength="100" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Коментар *</label>
+                        <textarea name="text" required placeholder="Поділіться своїми враженнями про фільм..." maxlength="500"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-submit">📝 Додати коментар</button>
+                </form>
+            </div>
+
+            <!-- Список коментарів -->
+            <div class="comments-list">
+                @if (Model.Comments.Any())
+                {
+                    @foreach (var comment in Model.Comments.OrderByDescending(c => c.CreatedAt))
+                    {
+                        <div class="comment-item">
+                            <div class="comment-header">
+                                <span class="comment-author">👤 @comment.AuthorName</span>
+                                <span class="comment-date">🕒 @comment.CreatedAt.ToString("dd.MM.yyyy HH:mm")</span>
+                            </div>
+                            <p class="comment-text">@comment.Text</p>
+                            <form method="post" action="@Url.Action("DeleteComment", "Home")" style="display: inline;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@comment.Id" />
+                                <input type="hidden" name="movieId" value="@Model.Id" />
+                                <button type="submit" class="btn-delete-comment" onclick="return confirm('Видалити цей коментар?');">🗑️ Видалити</button>
+                            </form>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="no-comments">
+                        <p>😊 Ще немає коментарів. Будьте першим, хто залишить відгук!</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</body>
+</html>

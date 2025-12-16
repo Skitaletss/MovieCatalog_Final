@@ -1,0 +1,228 @@
+@model IEnumerable<MovieCatalog.Models.Movie>
+@{
+    ViewData["Title"] = "Топ-10 найкращих фільмів";
+    var currentPage = (int)ViewData["CurrentPage"];
+    var totalPages = (int)ViewData["TotalPages"];
+    var genres = ViewData["Genres"] as List<string>;
+    var years = ViewData["Years"] as List<int>;
+}
+
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; min-height: 100vh; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { text-align: center; color: white; margin-bottom: 30px; }
+        .header h1 { font-size: 2.5em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 20px; }
+        .btn-add { display: inline-block; background: #10b981; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; transition: 0.3s; }
+        .btn-add:hover { background: #059669; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        
+        /* Панель фільтрів */
+        .filters-panel { background: white; border-radius: 15px; padding: 25px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .filters-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end; }
+        .filter-group { display: flex; flex-direction: column; }
+        .filter-group label { font-weight: bold; color: #374151; margin-bottom: 8px; }
+        .filter-group input, .filter-group select { padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1em; }
+        .filter-group input:focus, .filter-group select:focus { border-color: #667eea; outline: none; }
+        .filter-buttons { display: flex; gap: 10px; }
+        .btn-filter { background: #667eea; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-filter:hover { background: #764ba2; }
+        .btn-reset { background: #6b7280; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; text-decoration: none; display: inline-block; }
+        .btn-reset:hover { background: #4b5563; }
+        
+        /* Сортування */
+        .sort-panel { background: rgba(255,255,255,0.15); border-radius: 10px; padding: 15px; margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .sort-label { color: white; font-weight: bold; }
+        .sort-link { color: white; text-decoration: none; padding: 8px 15px; background: rgba(255,255,255,0.2); border-radius: 6px; transition: 0.3s; }
+        .sort-link:hover { background: rgba(255,255,255,0.3); }
+        .sort-link.active { background: rgba(255,255,255,0.4); font-weight: bold; }
+
+        .movies-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px; margin-bottom: 40px; }
+        .movie-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .movie-card:hover { transform: translateY(-10px); box-shadow: 0 15px 40px rgba(0,0,0,0.3); }
+        .movie-poster { width: 100%; height: 400px; object-fit: cover; display: block; }
+        .movie-content { padding: 20px; }
+        .movie-title { font-size: 1.4em; font-weight: bold; color: #333; margin-bottom: 10px; }
+        .movie-info { color: #666; font-size: 0.9em; margin-bottom: 5px; }
+        .movie-info strong { color: #444; }
+        .movie-year { display: inline-block; background: #667eea; color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.85em; font-weight: bold; margin-top: 10px; }
+        .movie-rating { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+        .rating-stars { color: #f59e0b; font-size: 1.2em; }
+        .rating-value { font-weight: bold; color: #333; font-size: 1.1em; }
+        .rating-count { color: #6b7280; font-size: 0.85em; }
+        .movie-description { margin-top: 15px; color: #555; line-height: 1.6; font-size: 0.95em; max-height: 100px; overflow: hidden; text-overflow: ellipsis; }
+        .movie-actions { margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn { display: inline-block; padding: 8px 16px; text-decoration: none; border-radius: 6px; font-size: 0.9em; font-weight: bold; transition: 0.3s; text-align: center; }
+        .btn-details { background: #3b82f6; color: white; }
+        .btn-details:hover { background: #2563eb; }
+        .btn-edit { background: #f59e0b; color: white; }
+        .btn-edit:hover { background: #d97706; }
+        .btn-delete { background: #ef4444; color: white; }
+        .btn-delete:hover { background: #dc2626; }
+        
+        /* Пагінація */
+        .pagination { display: flex; justify-content: center; gap: 10px; margin-top: 30px; flex-wrap: wrap; }
+        .page-link { background: white; color: #667eea; padding: 10px 18px; text-decoration: none; border-radius: 8px; font-weight: bold; transition: 0.3s; }
+        .page-link:hover { background: #f3f4f6; transform: translateY(-2px); }
+        .page-link.active { background: #667eea; color: white; }
+        .page-link.disabled { background: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
+
+        .footer { text-align: center; color: white; margin-top: 40px; padding: 20px; font-size: 0.9em; }
+        .no-results { color: white; text-align: center; font-size: 1.2em; padding: 40px; background: rgba(255,255,255,0.1); border-radius: 15px; }
+
+        @@media (max-width: 768px) {
+            .header h1 { font-size: 2em; }
+            .movies-grid { grid-template-columns: 1fr; }
+            .filters-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 Топ Найкращих Фільмів 🎬</h1>
+            <a href="/Home/Create" class="btn-add">➕ Додати новий фільм</a>
+        </div>
+
+        <!-- Панель фільтрів -->
+        <div class="filters-panel">
+            <form method="get" action="@Url.Action("Index", "Home")">
+                <div class="filters-row">
+                    <div class="filter-group">
+                        <label>🔍 Пошук</label>
+                        <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" placeholder="Назва або режисер..." />
+                    </div>
+
+                    <div class="filter-group">
+                        <label>🎭 Жанр</label>
+                        <select name="genre">
+                            <option value="">Всі жанри</option>
+                            @if (genres != null)
+                            {
+                                @foreach (var genre in genres)
+                                {
+                                    <option value="@genre" selected="@(genre == ViewData["CurrentGenre"]?.ToString())">@genre</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>📅 Рік</label>
+                        <select name="year">
+                            <option value="">Всі роки</option>
+                            @if (years != null)
+                            {
+                                @foreach (var year in years)
+                                {
+                                    <option value="@year" selected="@(year.ToString() == ViewData["CurrentYear"]?.ToString())">@year</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <div class="filter-buttons">
+                            <button type="submit" class="btn-filter">Застосувати</button>
+                            <a href="@Url.Action("Index", "Home")" class="btn-reset">Скинути</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Панель сортування -->
+        <div class="sort-panel">
+            <span class="sort-label">Сортувати за:</span>
+            <a href="@Url.Action("Index", "Home", new { searchString = ViewData["CurrentFilter"], genre = ViewData["CurrentGenre"], year = ViewData["CurrentYear"], sortOrder = ViewData["TitleSortParm"] })" 
+               class="sort-link @(String.IsNullOrEmpty(ViewData["CurrentSort"]?.ToString()) || ViewData["CurrentSort"]?.ToString() == "title_desc" ? "active" : "")">
+                Назвою
+            </a>
+            <a href="@Url.Action("Index", "Home", new { searchString = ViewData["CurrentFilter"], genre = ViewData["CurrentGenre"], year = ViewData["CurrentYear"], sortOrder = ViewData["YearSortParm"] })" 
+               class="sort-link @(ViewData["CurrentSort"]?.ToString() == "year" || ViewData["CurrentSort"]?.ToString() == "year_desc" ? "active" : "")">
+                Роком
+            </a>
+            <a href="@Url.Action("Index", "Home", new { searchString = ViewData["CurrentFilter"], genre = ViewData["CurrentGenre"], year = ViewData["CurrentYear"], sortOrder = ViewData["RatingSortParm"] })" 
+               class="sort-link @(ViewData["CurrentSort"]?.ToString() == "rating" || ViewData["CurrentSort"]?.ToString() == "rating_desc" ? "active" : "")">
+                Рейтингом
+            </a>
+        </div>
+
+        <!-- Сітка фільмів -->
+        <div class="movies-grid">
+            @if (Model != null && Model.Any())
+            {
+                @foreach (var movie in Model)
+                {
+                    <div class="movie-card">
+                        <img src="@movie.PosterUrl" alt="@movie.Title" class="movie-poster" onerror="this.src='/images/movies/default.jpg'">
+                        <div class="movie-content">
+                            <h2 class="movie-title">@movie.Title</h2>
+                            <p class="movie-info"><strong>Режисер:</strong> @movie.Director</p>
+                            <p class="movie-info"><strong>Жанр:</strong> @movie.Genre</p>
+                            <span class="movie-year">@movie.Year</span>
+                            
+                            <div class="movie-rating">
+                                <span class="rating-stars">⭐</span>
+                                <span class="rating-value">@movie.Rating.ToString("0.0")</span>
+                                <span class="rating-count">(@movie.RatingCount голосів)</span>
+                            </div>
+
+                            <p class="movie-description">@movie.Description</p>
+
+                            <div class="movie-actions">
+                                <a href="/Home/Details/@movie.Id" class="btn btn-details">📖 Деталі</a>
+                                <a href="/Home/Edit/@movie.Id" class="btn btn-edit">✏️ Редагувати</a>
+                                <a href="/Home/Delete/@movie.Id" class="btn btn-delete">🗑️ Видалити</a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="no-results">
+                    <p>😔 За вашими критеріями фільмів не знайдено.</p>
+                </div>
+            }
+        </div>
+
+        <!-- Пагінація -->
+        @if (totalPages > 1)
+        {
+            <div class="pagination">
+                @if (currentPage > 1)
+                {
+                    <a href="@Url.Action("Index", "Home", new { searchString = ViewData["CurrentFilter"], genre = ViewData["CurrentGenre"], year = ViewData["CurrentYear"], sortOrder = ViewData["CurrentSort"], page = 1 })" 
+                       class="page-link">⏮️ Перша</a>
+                    <a href="@Url.Action("Index", "Home", new { searchString = ViewData["CurrentFilter"], genre = ViewData["CurrentGenre"], year = ViewData["CurrentYear"], sortOrder = ViewData["CurrentSort"], page = currentPage - 1 })" 
+                       class="page-link">◀️ Попередня</a>
+                }
+
+                @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
+                {
+                    <a href="@Url.Action("Index", "Home", new { searchString = ViewData["CurrentFilter"], genre = ViewData["CurrentGenre"], year = ViewData["CurrentYear"], sortOrder = ViewData["CurrentSort"], page = i })" 
+                       class="page-link @(i == currentPage ? "active" : "")">@i</a>
+                }
+
+                @if (currentPage < totalPages)
+                {
+                    <a href="@Url.Action("Index", "Home", new { searchString = ViewData["CurrentFilter"], genre = ViewData["CurrentGenre"], year = ViewData["CurrentYear"], sortOrder = ViewData["CurrentSort"], page = currentPage + 1 })" 
+                       class="page-link">Наступна ▶️</a>
+                    <a href="@Url.Action("Index", "Home", new { searchString = ViewData["CurrentFilter"], genre = ViewData["CurrentGenre"], year = ViewData["CurrentYear"], sortOrder = ViewData["CurrentSort"], page = totalPages })" 
+                       class="page-link">Остання ⏭️</a>
+                }
+            </div>
+        }
+
+        <div class="footer">
+            <p>© 2025 Каталог фільмів | Знайдено фільмів: @Model.Count()</p>
+        </div>
+    </div>
+</body>
+</html>

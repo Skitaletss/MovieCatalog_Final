@@ -1,0 +1,131 @@
+@model MovieCatalog.Models.Movie
+@{
+    ViewData["Title"] = "Редагувати фільм";
+}
+
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; min-height: 100vh; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .back-btn { display: inline-block; background: white; color: #667eea; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-bottom: 20px; transition: 0.3s; }
+        .back-btn:hover { background: #f3f4f6; }
+        .form-container { background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .form-container h1 { color: #f59e0b; margin-bottom: 30px; text-align: center; font-size: 2em; }
+        .current-poster { text-align: center; margin-bottom: 20px; }
+        .current-poster img { max-width: 200px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .current-poster p { margin-top: 10px; color: #6b7280; font-size: 0.9em; }
+        .form-group { margin-bottom: 25px; }
+        .form-group label { display: block; font-weight: bold; color: #374151; margin-bottom: 8px; font-size: 1.1em; }
+        .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1em; transition: 0.3s; }
+        .form-group input:focus, .form-group textarea:focus { border-color: #f59e0b; outline: none; }
+        .form-group textarea { resize: vertical; min-height: 120px; font-family: Arial, sans-serif; }
+        .text-danger { color: #ef4444; font-size: 0.9em; margin-top: 5px; display: block; }
+        .form-actions { display: flex; gap: 15px; margin-top: 30px; }
+        .btn { flex: 1; padding: 14px; border: none; border-radius: 8px; font-size: 1.1em; font-weight: bold; cursor: pointer; transition: 0.3s; text-align: center; text-decoration: none; display: inline-block; }
+        .btn-submit { background: #f59e0b; color: white; }
+        .btn-submit:hover { background: #d97706; }
+        .btn-cancel { background: #6b7280; color: white; }
+        .btn-cancel:hover { background: #4b5563; }
+        .file-input-wrapper { position: relative; }
+        .file-input-label { display: block; padding: 12px; border: 2px dashed #f59e0b; border-radius: 8px; text-align: center; cursor: pointer; transition: 0.3s; background: #f9fafb; }
+        .file-input-label:hover { background: #f3f4f6; border-color: #d97706; }
+        .file-input { display: none; }
+        .info-text { color: #6b7280; font-size: 0.9em; margin-top: 5px; }
+        .readonly-info { background: #f3f4f6; padding: 10px; border-radius: 8px; color: #6b7280; font-size: 0.95em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="@Url.Action("Index", "Home")" class="back-btn">⬅️ Назад до списку</a>
+
+        <div class="form-container">
+            <h1>✏️ Редагувати фільм</h1>
+
+            <div class="current-poster">
+                <img src="@Model.PosterUrl" alt="@Model.Title" onerror="this.src='/images/movies/default.jpg'">
+                <p>Поточний постер</p>
+            </div>
+
+            <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="PosterUrl" />
+                <input type="hidden" asp-for="Rating" />
+                <input type="hidden" asp-for="RatingCount" />
+
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="form-group">
+                    <label asp-for="Title">Назва фільму *</label>
+                    <input asp-for="Title" class="form-control" />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Director">Режисер *</label>
+                    <input asp-for="Director" class="form-control" />
+                    <span asp-validation-for="Director" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Genre">Жанр *</label>
+                    <input asp-for="Genre" class="form-control" />
+                    <span asp-validation-for="Genre" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Year">Рік випуску *</label>
+                    <input asp-for="Year" type="number" class="form-control" />
+                    <span asp-validation-for="Year" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label>Поточний рейтинг</label>
+                    <div class="readonly-info">
+                        ⭐ @Model.Rating.ToString("0.0") / 10 (на основі @Model.RatingCount оцінок)
+                    </div>
+                    <span class="info-text">💡 Рейтинг формується з оцінок користувачів і не редагується вручну</span>
+                </div>
+
+                <div class="form-group">
+                    <label>Змінити постер (необов'язково)</label>
+                    <div class="file-input-wrapper">
+                        <label for="posterFile" class="file-input-label">
+                            📁 Виберіть нове зображення
+                        </label>
+                        <input type="file" id="posterFile" name="posterFile" accept="image/*" class="file-input" onchange="updateFileName(this)" />
+                    </div>
+                    <span id="fileName" style="color: #f59e0b; font-size: 0.9em; margin-top: 5px; display: block;"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Description">Опис *</label>
+                    <textarea asp-for="Description" class="form-control"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-submit">💾 Зберегти зміни</button>
+                    <a href="@Url.Action("Index", "Home")" class="btn btn-cancel">❌ Скасувати</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function updateFileName(input) {
+            const fileName = document.getElementById('fileName');
+            if (input.files && input.files[0]) {
+                fileName.textContent = '✅ Вибрано: ' + input.files[0].name;
+            } else {
+                fileName.textContent = '';
+            }
+        }
+    </script>
+</body>
+</html>
